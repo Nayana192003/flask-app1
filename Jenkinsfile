@@ -2,7 +2,9 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_IMAGE = "nayana192003/flask-app1"
+        DOCKER_IMAGE = "flask-app1"
+        CONTAINER_NAME = "flask-app1-container"
+        PORT = "5000"
     }
 
     stages {
@@ -15,8 +17,7 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 script {
-                    def imageName = "nayana192003/${DOCKER_IMAGE}"
-                    bat "docker build -t ${imageName}:latest ."
+                    bat "docker build -t ${DOCKER_IMAGE}:latest ."
                 }
             }
         }
@@ -24,30 +25,30 @@ pipeline {
         stage('Run Tests') {
             steps {
                 script {
-                    def imageName = "nayana192003/${DOCKER_IMAGE}"
-                    bat "docker run --rm ${imageName}:latest pytest tests/"
-                }
-            }
-        }
-
-        stage('Push Image to Docker Hub') {
-            steps {
-                script {
-                    def imageName = "nayana192003/${DOCKER_IMAGE}"
-                    withCredentials([usernamePassword(credentialsId: 'docker-hub-credentials', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
-                        bat "echo ${DOCKER_PASS} | docker login -u ${DOCKER_USER} --password-stdin"
-                        bat "docker tag ${imageName}:latest ${imageName}:latest"
-                        bat "docker push ${imageName}:latest"
-                    }
+                    bat "docker run --rm ${DOCKER_IMAGE}:latest pytest tests/"
                 }
             }
         }
 
         stage('Deploy Application') {
             steps {
-                bat "docker-compose down"
-                bat "docker-compose up -d"
+                script {
+                    // Stop and remove existing container if running
+                    bat "docker-compose down || exit 0"
+                    
+                    // Start application using Docker Compose
+                    bat "docker-compose up -d"
+                }
             }
+        }
+    }
+
+    post {
+        success {
+            echo "Pipeline completed successfully! Flask app is running on port ${PORT}"
+        }
+        failure {
+            echo "Pipeline failed. Check logs for errors."
         }
     }
 }
