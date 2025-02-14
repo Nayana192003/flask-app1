@@ -9,6 +9,7 @@ COPY . .
 
 # Install dependencies
 RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install pytest  # Ensure pytest is installed
 
 # Expose port 5000
 EXPOSE 5000
