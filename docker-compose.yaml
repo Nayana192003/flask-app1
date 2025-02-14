@@ -2,8 +2,9 @@ version: "3.8"
 
 services:
   flask-app:
-    image: flask-app1:latest
+    build: .
     container_name: flask-app1-container
     ports:
       - "5000:5000"
+    working_dir: /app
     restart: always
