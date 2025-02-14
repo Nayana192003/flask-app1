@@ -3,8 +3,6 @@ pipeline {
 
     environment {
         DOCKER_IMAGE = "nayana192003/flask-app1"
-        DOCKER_HUB_USERNAME = "your-dockerhub-username"  // Change this
-        DOCKER_HUB_PASSWORD = "your-dockerhub-password"  // Change this
     }
 
     stages {
@@ -17,7 +15,7 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 script {
-                    def imageName = "${DOCKER_HUB_USERNAME}/${DOCKER_IMAGE}"
+                    def imageName = "nayana192003/${DOCKER_IMAGE}"
                     bat "docker build -t ${imageName}:latest ."
                 }
             }
@@ -26,7 +24,7 @@ pipeline {
         stage('Run Tests') {
             steps {
                 script {
-                    def imageName = "${DOCKER_HUB_USERNAME}/${DOCKER_IMAGE}"
+                    def imageName = "nayana192003/${DOCKER_IMAGE}"
                     bat "docker run --rm ${imageName}:latest pytest tests/"
                 }
             }
@@ -35,10 +33,12 @@ pipeline {
         stage('Push Image to Docker Hub') {
             steps {
                 script {
-                    def imageName = "${DOCKER_HUB_USERNAME}/${DOCKER_IMAGE}"
-                    bat "docker login -u \"${DOCKER_HUB_USERNAME}\" -p \"${DOCKER_HUB_PASSWORD}\""
-                    bat "docker tag ${imageName}:latest ${imageName}:latest"
-                    bat "docker push ${imageName}:latest"
+                    def imageName = "nayana192003/${DOCKER_IMAGE}"
+                    withCredentials([usernamePassword(credentialsId: 'docker-hub-credentials', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                        bat "echo ${DOCKER_PASS} | docker login -u ${DOCKER_USER} --password-stdin"
+                        bat "docker tag ${imageName}:latest ${imageName}:latest"
+                        bat "docker push ${imageName}:latest"
+                    }
                 }
             }
         }
